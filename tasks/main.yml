@@ -1,0 +1,83 @@
+- name: Assures grafana directories exists
+  file: path=/etc/grafana state=directory
+  tags:
+    - grafana
+- name: Assures grafana directories exists
+  file: path=/var/lib/grafana/dashboards state=directory
+  tags:
+    - grafana
+- name: Assures grafana directories exists
+  file: path=/var/log/grafana state=directory
+  tags:
+    - grafana
+
+- name: Copy configurations
+  template: src="../config/grafana/grafana.ini"
+            dest="/etc/grafana/grafana.ini"
+            owner=root
+            group=root
+  tags:
+    - grafana
+- name: Copy configurations
+  template: src="../config/grafana/dashboards.json"
+            dest="/var/lib/grafana/dashboards/dashboards.json"
+            owner=root
+            group=root
+  tags:
+    - grafana-copy
+
+- name: Assures influxdb directories exists
+  file: path=/etc/influxdb state=directory
+  tags:
+    - influxdb
+- name: Assures influxdb directories exists
+  file: path=/var/lib/influxdb state=directory
+  tags:
+    - influxdb
+
+- name: Copy configurations
+  template: src="../config/influxdb/influxdb.conf"
+            dest="/etc/influxdb/influxdb.conf"
+            owner=root
+            group=root
+  tags:
+    - influxdb
+
+- name: "Launch InfluxDB container"
+  docker:
+    name: influxdb
+    image: influxdb
+    command: influxd -config /etc/influxdb/influxdb.conf
+    state: reloaded
+    restart_policy: always
+    log_driver: json-file
+    log_opt:
+      max-size: 50m
+      max-file: "1"
+    volumes:
+      - /var/lib/influxdb:/var/lib/influxdb
+      - /etc/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf:ro
+    ports:
+      - "8083:8083"
+      - "8086:8086"
+  tags:
+    - influxdb
+
+- name: "Launch Grafana container"
+  docker:
+    name: grafana
+    image: grafana/grafana:4.0.0-beta2
+    state: reloaded
+    restart_policy: always
+    ports:
+      - "3000:3000"
+    links:
+      - influxdb
+    volumes:
+      - /var/lib/grafana:/var/lib/grafana
+      - /etc/grafana:/etc/grafana
+      - /var/log/grafana:/var/log/grafana
+    env:
+      GF_SECURITY_ADMIN_PASSWORD: "{{gf_admin_password}}"
+  tags:
+    - grafana
