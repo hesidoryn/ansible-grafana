@@ -13,7 +13,7 @@ Role Variables
 
 ```
 # A password for admin user. You need it to login to the grafana.
-gf_admin_password: paralect_drafana$
+gf_admin_password: paralect_grafana$
 ```
 
 Dependencies
@@ -33,7 +33,7 @@ Example Playbook
   roles:
     - role: paralect.grafana
       # A password for admin user. You need it to login to the grafana.
-      gf_admin_password: paralect_drafana$
+      gf_admin_password: paralect_grafana$
 ```
 
  License
